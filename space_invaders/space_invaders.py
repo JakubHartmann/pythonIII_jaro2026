@@ -1,4 +1,5 @@
-import pygame 
+import pygame
+import random
 
 pygame.init()
 
@@ -8,6 +9,8 @@ pygame.display.set_caption('Space Invanders')
 
 laser_sound = pygame.mixer.Sound("assets/laser.wav")
 laser_sound.set_volume(0.25)
+
+bg = pygame.image.load("assets/bg.png")
 
 
 class SpaceShip(pygame.sprite.Sprite):
@@ -33,9 +36,7 @@ class SpaceShip(pygame.sprite.Sprite):
             laser_sound.play()
             spaceship_bullet_group.add(SpaceShipBullet(self.rect.centerx, self.rect.centery))
 
-    def draw(self):
-        screen.blit(self.image, self.rect)
-        screen.fill("Orange")
+
 
 
 class SpaceShipBullet(pygame.sprite.Sprite):
@@ -51,17 +52,55 @@ class SpaceShipBullet(pygame.sprite.Sprite):
             self.kill()
 
 
+class Alien(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load("assets/alien" + str(random.randint(1,5)) + ".png")
+        self.rect = self.image.get_rect(center=(x, y))
+        self.direction = 1
+        self.counter = 0
+
+
+    def update(self):
+        self.counter += 1
+        
+        self.rect.x += self.direction * 1
+
+        if self.counter == 100:
+            self.direction *= -1
+            self.counter = 0
+
+
+        for bullet in spaceship_bullet_group:
+            if self.rect.colliderect(bullet.rect):
+                self.kill()
+                bullet.kill()
+
+
+
+
 
 spaceship = SpaceShip()
 
 spaceship_group = pygame.sprite.Group()
 spaceship_bullet_group = pygame.sprite.Group()
+alien_group = pygame.sprite.Group()
+
 
 spaceship_group.add(spaceship)
 
-clock = pygame.time.Clock()
 
+def generate_aliens():
+    for x in range(50, 550, 100):
+        for y in range(100, 500, 100):
+            alien = Alien(x, y)
+            alien_group.add(alien)
+
+generate_aliens()
+
+clock = pygame.time.Clock()
 running = True
+
 while running:
 
     for event in pygame.event.get():
@@ -70,12 +109,14 @@ while running:
 
     spaceship_group.update()
     spaceship_bullet_group.update()
+    alien_group.update()
 
 
 
-    screen.fill("Black")
+    screen.blit(bg, (0,0))
     spaceship_group.draw(screen)
     spaceship_bullet_group.draw(screen)
+    alien_group.draw(screen)
 
     clock.tick(60)
     pygame.display.update()
